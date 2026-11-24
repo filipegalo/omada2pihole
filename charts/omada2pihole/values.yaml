@@ -1,0 +1,103 @@
+# How the sync runs:
+#   cronjob    - a CronJob that runs one pass (--once) per schedule
+#   deployment - a single long-running pod that loops (--interval)
+mode: cronjob
+
+image:
+  repository: ghcr.io/filipegalo/omada2pihole
+  # Defaults to the chart appVersion.
+  tag: ""
+  # Optional, e.g. sha256:...; takes precedence over tag.
+  digest: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+cronjob:
+  schedule: "*/5 * * * *"
+  # e.g. Europe/Lisbon; empty uses the controller's time zone.
+  timeZone: ""
+  suspend: false
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+
+deployment:
+  # Go duration between passes; minimum 30s.
+  interval: 5m
+
+# Application settings, see docs/configuration.md.
+# Only values you set are passed to the container; empty strings and false
+# leave the application default in place (or the value from credentials.existingSecret).
+config:
+  omada:
+    # Required, e.g. https://omada.example.lan:8043
+    url: ""
+    # Required: the Omada ID from the Open API credential page.
+    id: ""
+    # Site name. Application default: Default
+    site: ""
+    tlsSkipVerify: false
+    # Path of a PEM CA file inside the container; mount it with extraVolumes.
+    caFile: ""
+  pihole:
+    # Required, e.g. https://pi.hole
+    url: ""
+    tlsSkipVerify: false
+    caFile: ""
+    # Restart Pi-hole's resolver after a pass that changed something.
+    # Needs webserver.api.allow_destructive=true on the Pi-hole.
+    restartDns: false
+  # Record suffix and ownership marker. Application default: lan
+  domainSuffix: ""
+  dryRun: false
+  # Bypasses the mass-delete guard. Use for a single run only.
+  allowMassDelete: false
+  # info or debug. Application default: info
+  logLevel: ""
+
+credentials:
+  # Name of an existing Secret to load with envFrom. It must hold OMADA_CLIENT_ID,
+  # OMADA_CLIENT_SECRET and PIHOLE_PASSWORD, and may hold any other setting.
+  # Settings from `config` take precedence over the Secret.
+  # When set, the values below are ignored and no Secret is created.
+  existingSecret: ""
+  omadaClientId: ""
+  omadaClientSecret: ""
+  piholePassword: ""
+
+# Additional environment variables, as a list of EnvVar objects.
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 16Mi
+  limits:
+    memory: 64Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

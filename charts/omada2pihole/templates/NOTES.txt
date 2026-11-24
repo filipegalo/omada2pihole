@@ -1,0 +1,19 @@
+{{- if eq .Values.mode "cronjob" }}
+omada2pihole runs on the schedule "{{ .Values.cronjob.schedule }}".
+
+Run a pass now and follow it:
+
+  kubectl -n {{ .Release.Namespace }} create job --from=cronjob/{{ include "omada2pihole.fullname" . }} {{ include "omada2pihole.fullname" . }}-manual
+  kubectl -n {{ .Release.Namespace }} logs -f job/{{ include "omada2pihole.fullname" . }}-manual
+{{- else }}
+omada2pihole runs a pass every {{ .Values.deployment.interval }}.
+
+Follow the logs:
+
+  kubectl -n {{ .Release.Namespace }} logs -f deploy/{{ include "omada2pihole.fullname" . }}
+{{- end }}
+{{- if .Values.config.dryRun }}
+
+DRY_RUN is on: planned changes are logged, nothing is written to Pi-hole.
+Set config.dryRun=false once the plan looks right.
+{{- end }}

@@ -1,0 +1,27 @@
+{{- if eq .Values.mode "cronjob" }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "omada2pihole.fullname" . }}
+  labels:
+    {{- include "omada2pihole.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  {{- with .Values.cronjob.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  suspend: {{ .Values.cronjob.suspend }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.cronjob.activeDeadlineSeconds }}
+      template:
+        metadata:
+          {{- include "omada2pihole.podMetadata" . | nindent 10 }}
+        spec:
+          restartPolicy: Never
+          {{- include "omada2pihole.podSpec" (dict "ctx" . "args" (list "--once")) | trim | nindent 10 }}
+{{- end }}

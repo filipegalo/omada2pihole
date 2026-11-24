@@ -1,0 +1,21 @@
+{{- if eq .Values.mode "deployment" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "omada2pihole.fullname" . }}
+  labels:
+    {{- include "omada2pihole.labels" . | nindent 4 }}
+spec:
+  # A single instance; two syncers would race on the same records.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "omada2pihole.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- include "omada2pihole.podMetadata" . | nindent 6 }}
+    spec:
+      {{- include "omada2pihole.podSpec" (dict "ctx" . "args" (list "--interval" .Values.deployment.interval)) | trim | nindent 6 }}
+{{- end }}

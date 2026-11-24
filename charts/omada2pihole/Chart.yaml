@@ -1,0 +1,15 @@
+apiVersion: v2
+name: omada2pihole
+description: Publish Omada client names as Pi-hole v6 local DNS records so Pi-hole shows device names.
+type: application
+# Set from the git tag by the release workflow.
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/filipegalo/omada2pihole
+sources:
+  - https://github.com/filipegalo/omada2pihole
+keywords:
+  - pihole
+  - omada
+  - dns

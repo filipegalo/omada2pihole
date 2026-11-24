@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+      - name: go vet
+        run: go vet ./...
+      - name: go test
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1 >> "$GITHUB_STEP_SUMMARY"
+
+  govulncheck:
+    name: Vulnerability check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+        with:
+          go-version-file: go.mod
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build (no push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  chart:
+    name: Helm chart
+    runs-on: ubuntu-latest
+    env:
+      CHART: charts/omada2pihole
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: helm lint
+        run: |
+          helm lint --strict "$CHART" -f "$CHART/ci/test-values.yaml"
+          helm lint --strict "$CHART" -f "$CHART/ci/test-values.yaml" --set mode=deployment
+      - name: Render and validate (kubeconform)
+        run: |
+          mkdir -p rendered
+          helm template ci "$CHART" -f "$CHART/ci/test-values.yaml" > rendered/cronjob.yaml
+          helm template ci "$CHART" -f "$CHART/ci/test-values.yaml" --set mode=deployment > rendered/deployment.yaml
+          helm template ci "$CHART" --set credentials.existingSecret=x > rendered/existing-secret.yaml
+          docker run --rm -v "$PWD/rendered:/w:ro" \
+            ghcr.io/yannh/kubeconform:v0.7.0@sha256:85dbef6b4b312b99133decc9c6fc9495e9fc5f92293d4ff3b7e1b30f5611823c \
+            -strict -summary /w

@@ -1,0 +1,16 @@
+# Build output
+/bin/
+/dist/
+
+# Test and coverage output
+*.out
+coverage.*
+
+# Local configuration (may contain secrets)
+.env
+*.env
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store

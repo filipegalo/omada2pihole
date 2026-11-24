@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "mode": { "type": "string", "enum": ["cronjob", "deployment"] },
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^(sha256:[a-f0-9]{64})?$" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "cronjob": {
+      "type": "object",
+      "properties": {
+        "schedule": { "type": "string", "minLength": 1 },
+        "timeZone": { "type": "string" },
+        "suspend": { "type": "boolean" },
+        "concurrencyPolicy": { "type": "string", "enum": ["Allow", "Forbid", "Replace"] },
+        "successfulJobsHistoryLimit": { "type": "integer", "minimum": 0 },
+        "failedJobsHistoryLimit": { "type": "integer", "minimum": 0 },
+        "backoffLimit": { "type": "integer", "minimum": 0 },
+        "activeDeadlineSeconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "interval": { "type": "string", "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$" }
+      }
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "omada": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string" },
+            "id": { "type": "string" },
+            "site": { "type": "string" },
+            "tlsSkipVerify": { "type": "boolean" },
+            "caFile": { "type": "string" }
+          }
+        },
+        "pihole": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string" },
+            "tlsSkipVerify": { "type": "boolean" },
+            "caFile": { "type": "string" },
+            "restartDns": { "type": "boolean" }
+          }
+        },
+        "domainSuffix": { "type": "string" },
+        "dryRun": { "type": "boolean" },
+        "allowMassDelete": { "type": "boolean" },
+        "logLevel": { "type": "string", "enum": ["", "info", "debug"] }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "existingSecret": { "type": "string" },
+        "omadaClientId": { "type": "string" },
+        "omadaClientSecret": { "type": "string" },
+        "piholePassword": { "type": "string" }
+      }
+    },
+    "extraEnv": { "type": "array" },
+    "extraVolumes": { "type": "array" },
+    "extraVolumeMounts": { "type": "array" }
+  }
+}

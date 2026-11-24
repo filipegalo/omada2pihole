@@ -1,0 +1,35 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please remove secrets (client secret, password, session id) from anything you paste.
+        Security problems: use private reporting instead (see SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: omada2pihole version
+      description: Output of `omada2pihole --version` or the image tag.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Omada controller and Pi-hole versions
+      placeholder: "Omada 6.x software controller, Pi-hole FTL v6.x"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Run with `LOG_LEVEL=debug` and `DRY_RUN=true` if possible.
+      render: text

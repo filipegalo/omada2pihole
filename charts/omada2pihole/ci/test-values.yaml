@@ -1,0 +1,11 @@
+# Used by CI to render the chart; not shipped in the package.
+config:
+  omada:
+    url: https://omada.example.lan:8043
+    id: 0123456789abcdef0123456789abcdef
+  pihole:
+    url: https://pi.hole
+credentials:
+  omadaClientId: test-id
+  omadaClientSecret: test-secret
+  piholePassword: test-password
